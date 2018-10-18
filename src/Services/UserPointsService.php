@@ -108,7 +108,8 @@ class UserPointsService extends RepositoryBase
                 'points_description' => $pointsDescription,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
-                'updated_at' => null,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }

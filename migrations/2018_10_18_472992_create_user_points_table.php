@@ -14,7 +14,7 @@ class CreateUserPointsTable extends Migration
     public function up()
     {
         Schema::connection(config('points.database_connection_name'))->create(
-            config('points.table_prefix') . config('points.tables.user_points'),
+            config('points.tables.user_points'),
             function(Blueprint $table) {
                 $table->increments('id');
 
@@ -31,7 +31,7 @@ class CreateUserPointsTable extends Migration
                 $table->timestamp('created_at')->nullable()->index();
                 $table->timestamp('updated_at')->nullable()->index();
 
-                $table->unique(['user_id', 'trigger_hash'], 'u_t');
+                $table->unique(['user_id', 'trigger_hash', 'brand'], 'u_t_b');
             }
         );
     }

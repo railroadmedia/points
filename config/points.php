@@ -11,8 +11,7 @@ return [
     'brand' => 'brand',
 
     // tables
-    'table_prefix' => 'points_',
     'tables' => [
-        'user_points' => 'user_points',
+        'user_points' => 'points_user_points',
     ],
 ];

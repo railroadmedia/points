@@ -3,6 +3,7 @@
 namespace Railroad\Points\Functional;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Railroad\Points\Services\UserPointsService;
 use Railroad\Points\Tests\PointsTestCase;
 
@@ -68,5 +69,94 @@ class UserPointsServiceTest extends PointsTestCase
             [1 => 5, 2 => 500, 3 => 5000, 4 => 0],
             $this->userPointsService->countPointsForMany([1, 2, 3, 4])
         );
+    }
+
+    public function test_set_points_new()
+    {
+        $this->userPointsService->setPoints(1, 'hash', 'name', 5, 'description', 'brand');
+
+        $this->assertDatabaseHas(
+            config('points.tables.user_points'),
+            [
+                'user_id' => 1,
+                'trigger_hash' => 'hash',
+                'trigger_name' => 'name',
+                'points' => 5,
+                'points_description' => 'description',
+                'brand' => 'brand',
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            config('points.database_connection_name')
+        );
+    }
+
+    public function test_set_points_existing()
+    {
+        $this->userPointsService->setPoints(1, 'hash', 'name', 5, 'description', 'brand');
+        $this->userPointsService->setPoints(1, 'hash', 'name', 25, 'description', 'brand');
+
+        $this->assertDatabaseHas(
+            config('points.tables.user_points'),
+            [
+                'user_id' => 1,
+                'trigger_hash' => 'hash',
+                'trigger_name' => 'name',
+                'points' => 25,
+                'points_description' => 'description',
+                'brand' => 'brand',
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            config('points.database_connection_name')
+        );
+    }
+
+    public function test_delete_points_non_exist()
+    {
+        $deleted = $this->userPointsService->deletePoints(1, 'hash');
+
+        $this->assertFalse($deleted);
+    }
+
+    public function test_delete_points_existing()
+    {
+        $this->userPointsService->setPoints(1, 'hash', 'name', 5, 'description', 'brand');
+
+        $this->assertEquals(5, $this->userPointsService->countPoints(1, 'brand'));
+
+        $deleted = $this->userPointsService->deletePoints(1, 'hash', 'brand');
+
+        $this->assertTrue($deleted);
+
+        $this->assertDatabaseMissing(
+            config('points.tables.user_points'),
+            [
+                'user_id' => 1,
+                'trigger_hash' => 'hash',
+                'trigger_name' => 'name',
+                'points' => 5,
+            ],
+            config('points.database_connection_name')
+        );
+
+        $this->assertEquals(0, $this->userPointsService->countPoints(1, 'brand'));
+    }
+
+    public function test_hash()
+    {
+        $hash1 = $this->userPointsService->hash(['content_id' => 1]);
+        $hash2 = $this->userPointsService->hash(['content_id' => 1]);
+
+        $this->assertEquals($hash1, $hash2);
+
+        $hash1 = $this->userPointsService->hash(new Collection(['content_id' => 1]));
+        $hash2 = $this->userPointsService->hash(new Collection(['content_id' => 1]));
+
+        $this->assertEquals($hash1, $hash2);
     }
 }

@@ -21,7 +21,7 @@ class UserPointsRepository extends RepositoryBase
     protected function newQuery()
     {
         return (new BaseQuery($this->connection()))->from(
-            config('points.table_prefix') . config('points.tables.user_points')
+            config('points.tables.user_points')
         );
     }
 
