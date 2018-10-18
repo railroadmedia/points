@@ -20,14 +20,18 @@ class CreateUserPointsTable extends Migration
 
                 $table->string('user_id')->index();
 
-                $table->string('trigger_hash');
-                $table->string('trigger_description')->nullable();
+                $table->string('trigger_hash', 32)->index();
+                $table->string('trigger_name');
 
-                $table->integer('points')->default(0);
+                $table->bigInteger('points')->index()->default(0);
                 $table->string('points_description')->nullable();
+
+                $table->string('brand');
 
                 $table->timestamp('created_at')->nullable()->index();
                 $table->timestamp('updated_at')->nullable()->index();
+
+                $table->unique(['user_id', 'trigger_hash'], 'u_t');
             }
         );
     }
