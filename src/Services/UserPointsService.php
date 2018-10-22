@@ -80,8 +80,10 @@ class UserPointsService extends RepositoryBase
     }
 
     /**
+     * $triggerHashData must be serializable.
+     *
      * @param $userId
-     * @param $triggerHash
+     * @param $triggerHashData
      * @param $triggerName
      * @param $points
      * @param null $pointsDescription
@@ -90,7 +92,7 @@ class UserPointsService extends RepositoryBase
      */
     public function setPoints(
         $userId,
-        $triggerHash,
+        $triggerHashData,
         $triggerName,
         $points,
         $pointsDescription = null,
@@ -99,7 +101,8 @@ class UserPointsService extends RepositoryBase
         return $this->userPointsRepository->updateOrCreate(
             [
                 'user_id' => $userId,
-                'trigger_hash' => $triggerHash,
+                'trigger_hash' => $this->hash($triggerHashData),
+                'trigger_hash_data' => serialize($triggerHashData),
                 'brand' => $brand ?? config('points.brand'),
             ],
             [
@@ -116,17 +119,20 @@ class UserPointsService extends RepositoryBase
 
     /**
      * @param $userId
-     * @param $triggerHash
+     * @param $triggerHashData
      * @param null $brand
      * @return bool
      */
-    public function deletePoints($userId, $triggerHash, $brand = null)
-    {
+    public function deletePoints(
+        $userId,
+        $triggerHashData,
+        $brand = null
+    ) {
         return $this->userPointsRepository->query()
                 ->where(
                     [
                         'user_id' => $userId,
-                        'trigger_hash' => $triggerHash,
+                        'trigger_hash' => $this->hash($triggerHashData),
                         'brand' => $brand ?? config('points.brand'),
                     ]
                 )

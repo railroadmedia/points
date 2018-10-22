@@ -44,7 +44,7 @@ class UserPointsServiceTest extends PointsTestCase
 
     public function test_count_points_for_many()
     {
-        $this->userPointsService->setPoints(1, 'hash', 'trigger', 5);
+        $this->userPointsService->setPoints(1, ['hash_data_1', 'hash_data_2'], 'trigger', 5);
 
         $this->assertEquals([1 => 5, 2 => 0], $this->userPointsService->countPointsForMany([1, 2]));
     }
@@ -73,14 +73,15 @@ class UserPointsServiceTest extends PointsTestCase
 
     public function test_set_points_new()
     {
-        $this->userPointsService->setPoints(1, 'hash', 'name', 5, 'description', 'brand');
+        $this->userPointsService->setPoints(1, (object)['data' => 5], 'name', 5, 'description', 'brand');
 
         $this->assertDatabaseHas(
             config('points.tables.user_points'),
             [
                 'user_id' => 1,
-                'trigger_hash' => 'hash',
+                'trigger_hash' => $this->userPointsService->hash((object)['data' => 5]),
                 'trigger_name' => 'name',
+                'trigger_hash_data' => serialize((object)['data' => 5]),
                 'points' => 5,
                 'points_description' => 'description',
                 'brand' => 'brand',
@@ -102,8 +103,9 @@ class UserPointsServiceTest extends PointsTestCase
             config('points.tables.user_points'),
             [
                 'user_id' => 1,
-                'trigger_hash' => 'hash',
+                'trigger_hash' => $this->userPointsService->hash('hash'),
                 'trigger_name' => 'name',
+                'trigger_hash_data' => serialize('hash'),
                 'points' => 25,
                 'points_description' => 'description',
                 'brand' => 'brand',
@@ -137,7 +139,7 @@ class UserPointsServiceTest extends PointsTestCase
             config('points.tables.user_points'),
             [
                 'user_id' => 1,
-                'trigger_hash' => 'hash',
+                'trigger_hash' => $this->userPointsService->hash('hash'),
                 'trigger_name' => 'name',
                 'points' => 5,
             ],
