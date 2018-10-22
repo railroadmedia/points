@@ -98,20 +98,41 @@ class UserPointsService extends RepositoryBase
         $pointsDescription = null,
         $brand = null
     ) {
-        return $this->userPointsRepository->updateOrCreate(
+        $existing =
+            $this->userPointsRepository->query()
+                ->where(
+                    [
+                        'user_id' => $userId,
+                        'trigger_hash' => $this->hash($triggerHashData),
+                        'trigger_hash_data' => serialize($triggerHashData),
+                        'brand' => $brand ?? config('points.brand'),
+                    ]
+                )
+                ->first();
+
+        if (!empty($existing)) {
+            return $this->userPointsRepository->update(
+                $existing['id'],
+                [
+                    'trigger_name' => $triggerName,
+                    'points' => $points,
+                    'points_description' => $pointsDescription,
+                    'updated_at' => Carbon::now()
+                        ->toDateTimeString(),
+                ]
+            );
+        }
+
+        return $this->userPointsRepository->create(
             [
                 'user_id' => $userId,
                 'trigger_hash' => $this->hash($triggerHashData),
                 'trigger_hash_data' => serialize($triggerHashData),
                 'brand' => $brand ?? config('points.brand'),
-            ],
-            [
                 'trigger_name' => $triggerName,
                 'points' => $points,
                 'points_description' => $pointsDescription,
                 'created_at' => Carbon::now()
-                    ->toDateTimeString(),
-                'updated_at' => Carbon::now()
                     ->toDateTimeString(),
             ]
         );
