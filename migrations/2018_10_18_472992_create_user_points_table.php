@@ -18,7 +18,7 @@ class CreateUserPointsTable extends Migration
             function(Blueprint $table) {
                 $table->increments('id');
 
-                $table->string('user_id')->index();
+                $table->integer('user_id')->index();
 
                 $table->string('trigger_hash', 32)->index();
                 $table->string('trigger_name')->index();
