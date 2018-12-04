@@ -14,4 +14,19 @@ return [
     'tables' => [
         'user_points' => 'points_user_points',
     ],
+
+    // mapping points to tiers
+    'tier_default' => 'Beginner',
+    'tier_map' => [
+        ['name' => 'Level 1', 'start' => 0],
+        ['name' => 'Level 2', 'start' => 1000],
+        ['name' => 'Level 3', 'start' => 2000],
+        ['name' => 'Level 4', 'start' => 3000],
+        ['name' => 'Level 5', 'start' => 4000],
+        ['name' => 'Level 6', 'start' => 5000],
+        ['name' => 'Level 7', 'start' => 6000],
+        ['name' => 'Level 8', 'start' => 7000],
+        ['name' => 'Level 9', 'start' => 8000],
+        ['name' => 'Level 10', 'start' => 9000],
+    ],
 ];
