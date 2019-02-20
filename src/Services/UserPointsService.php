@@ -14,6 +14,8 @@ class UserPointsService extends RepositoryBase
      */
     private $userPointsRepository;
 
+    public static $userPointsCache = [];
+
     /**
      * UserPointsService constructor.
      *
@@ -22,6 +24,18 @@ class UserPointsService extends RepositoryBase
     public function __construct(UserPointsRepository $userPointsRepository)
     {
         $this->userPointsRepository = $userPointsRepository;
+    }
+
+    /**
+     * @param $userId
+     * @return integer
+     */
+    public static function fetchPoints($userId) {
+        if (!is_null(self::$userPointsCache[$userId])) {
+            return self::$userPointsCache[$userId];
+        }
+
+        return app()->make(self::class)->countPoints($userId);
     }
 
     /**
