@@ -30,12 +30,33 @@ class UserPointsService extends RepositoryBase
      * @param $userId
      * @return integer
      */
-    public static function fetchPoints($userId) {
+    public static function fetchPoints($userId)
+    {
+        $idsToPull = [];
+
+        foreach (self::$userPointsCache as $userId => $points) {
+            if (is_null($points)) {
+                $idsToPull[] = $userId;
+            }
+        }
+
+        if (!empty($idsToPull)) {
+            self::$userPointsCache =
+                array_replace(
+                    self::$userPointsCache,
+                    app()
+                        ->make(self::class)
+                        ->countPointsForMany($idsToPull)
+                );
+        }
+
         if (!is_null(self::$userPointsCache[$userId])) {
             return self::$userPointsCache[$userId];
         }
 
-        return app()->make(self::class)->countPoints($userId);
+        return app()
+            ->make(self::class)
+            ->countPoints($userId);
     }
 
     /**
@@ -193,26 +214,29 @@ class UserPointsService extends RepositoryBase
         return $this->userPointsRepository;
     }
 
-
-    public static function tierMap(){
+    public static function tierMap()
+    {
         $tierMap = config('points.tier_map');
 
         // Ensures sorted by points ascending so that getRankFromXp functions properly.
-        usort($tierMap, function ($a, $b)
-        {
-            $a = $a['start'];
-            $b = $b['start'];
+        usort(
+            $tierMap,
+            function ($a, $b) {
+                $a = $a['start'];
+                $b = $b['start'];
 
-            if ($a == $b) {
-                return 0;
+                if ($a == $b) {
+                    return 0;
+                }
+                return ($a < $b) ? -1 : 1;
             }
-            return ($a < $b) ? -1 : 1;
-        });
+        );
 
         return $tierMap;
     }
 
-    public static function tierDefault(){
+    public static function tierDefault()
+    {
         return config('points.tier_default');
     }
 
@@ -221,18 +245,18 @@ class UserPointsService extends RepositoryBase
         $membersTier = null;
         $tierMap = self::tierMap();
 
-        foreach ($tierMap as $tier){
+        foreach ($tierMap as $tier) {
             /*
              * Sets on each loop until the highest tier with a 'points-base' greater than (or equal to) the xp is
              * reached. Then will continue to loop, but will not set because xp is not greater than (or equal to)!
              * This relies on the list of levels being ordered by minimum-points **ASCENDING**. This is why we
              * order it in the tierMap function above
              */
-            if($xp >= $tier['start']){
+            if ($xp >= $tier['start']) {
                 $membersTier = $tier['name'];
             }
         }
-        if(!$membersTier){
+        if (!$membersTier) {
             $membersTier = self::tierDefault();
         }
 
