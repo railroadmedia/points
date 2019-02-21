@@ -50,7 +50,7 @@ class UserPointsService extends RepositoryBase
                 );
         }
 
-        if (!is_null(self::$userPointsCache[$userId])) {
+        if (!is_null(self::$userPointsCache[$userId] ?? null)) {
             return self::$userPointsCache[$userId];
         }
 
