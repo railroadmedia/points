@@ -34,9 +34,9 @@ class UserPointsService extends RepositoryBase
     {
         $idsToPull = [];
 
-        foreach (self::$userPointsCache as $userId => $points) {
+        foreach (self::$userPointsCache as $_userId => $points) {
             if (is_null($points)) {
-                $idsToPull[] = $userId;
+                $idsToPull[] = $_userId;
             }
         }
 
