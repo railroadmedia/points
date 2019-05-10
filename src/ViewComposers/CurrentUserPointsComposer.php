@@ -9,9 +9,17 @@ class CurrentUserPointsComposer
 {
     public function compose(View $view)
     {
-        $view->with(
-            'currentUsersPoints',
-            UserPointsService::fetchPoints(auth()->id())
-        );
+        if (!empty(auth()->id())) {
+            $view->with(
+                'currentUsersPoints',
+                UserPointsService::fetchPoints(auth()->id())
+            );
+        }
+        else {
+            $view->with(
+                'currentUsersPoints',
+                0
+            );
+        }
     }
 }
