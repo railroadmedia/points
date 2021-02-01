@@ -54,9 +54,11 @@ class UserPointsService extends RepositoryBase
             return self::$userPointsCache[$userId];
         }
 
-        return app()
+        self::$userPointsCache[$userId] = app()
             ->make(self::class)
             ->countPoints($userId);
+
+        return self::$userPointsCache[$userId];
     }
 
     /**
