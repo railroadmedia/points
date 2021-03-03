@@ -3,6 +3,8 @@
 namespace Railroad\Points\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Railroad\Points\Events\UserPointsUpdated;
+use Railroad\Points\Listeners\PointsEventListener;
 
 class PointsServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,11 @@ class PointsServiceProvider extends ServiceProvider
         if (config('points.data_mode') == 'host') {
             $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
         }
+        
+        // events
+        $this->listen = [
+            UserPointsUpdated::class => [PointsEventListener::class . '@handleUserPointsUpdated'],
+        ];
     }
 
     /**

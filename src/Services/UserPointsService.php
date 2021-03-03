@@ -3,6 +3,7 @@
 namespace Railroad\Points\Services;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Railroad\Points\Repositories\UserPointsRepository;
 use Railroad\Resora\Repositories\RepositoryBase;
@@ -32,24 +33,6 @@ class UserPointsService extends RepositoryBase
      */
     public static function fetchPoints($userId)
     {
-        $idsToPull = [];
-
-        foreach (self::$userPointsCache as $_userId => $points) {
-            if (is_null($points)) {
-                $idsToPull[] = $_userId;
-            }
-        }
-
-        if (!empty($idsToPull)) {
-            self::$userPointsCache =
-                array_replace(
-                    self::$userPointsCache,
-                    app()
-                        ->make(self::class)
-                        ->countPointsForMany($idsToPull)
-                );
-        }
-
         if (!is_null(self::$userPointsCache[$userId] ?? null)) {
             return self::$userPointsCache[$userId];
         }
@@ -68,14 +51,24 @@ class UserPointsService extends RepositoryBase
      */
     public function countPoints($userId, $brand = null)
     {
-        return $this->userPointsRepository->query()
-            ->where(
-                [
-                    'user_id' => $userId,
-                    'brand' => $brand ?? config('points.brand'),
-                ]
-            )
-            ->sum('points');
+        $cacheKey = $this->getUserPointsCacheKey($userId, $brand);
+
+        $cachedValue = Cache::get($cacheKey);
+
+        if (is_null($cachedValue)) {
+            $cachedValue = $this->userPointsRepository->query()
+                ->where(
+                    [
+                        'user_id' => $userId,
+                        'brand' => $brand ?? config('points.brand'),
+                    ]
+                )
+                ->sum('points');
+
+            Cache::put($cacheKey, $cachedValue, config('points.cache_duration', 60));
+        }
+
+        return $cachedValue;
     }
 
     /**
@@ -134,7 +127,8 @@ class UserPointsService extends RepositoryBase
         $points,
         $pointsDescription = null,
         $brand = null
-    ) {
+    )
+    {
         $existing =
             $this->userPointsRepository->query()
                 ->where(
@@ -148,6 +142,8 @@ class UserPointsService extends RepositoryBase
                 ->first();
 
         if (!empty($existing)) {
+            $this->clearUserPointsCache($userId, $brand);
+
             return $this->userPointsRepository->update(
                 $existing['id'],
                 [
@@ -160,7 +156,7 @@ class UserPointsService extends RepositoryBase
             );
         }
 
-        return $this->userPointsRepository->create(
+        $result = $this->userPointsRepository->create(
             [
                 'user_id' => $userId,
                 'trigger_hash' => $this->hash($triggerHashData),
@@ -173,6 +169,10 @@ class UserPointsService extends RepositoryBase
                     ->toDateTimeString(),
             ]
         );
+
+        $this->clearUserPointsCache($userId, $brand);
+
+        return $result;
     }
 
     /**
@@ -185,8 +185,9 @@ class UserPointsService extends RepositoryBase
         $userId,
         $triggerHashData,
         $brand = null
-    ) {
-        return $this->userPointsRepository->query()
+    )
+    {
+        $result = $this->userPointsRepository->query()
                 ->where(
                     [
                         'user_id' => $userId,
@@ -195,6 +196,10 @@ class UserPointsService extends RepositoryBase
                     ]
                 )
                 ->delete() > 0;
+
+        $this->clearUserPointsCache($userId, $brand);
+
+        return $result;
     }
 
     /**
@@ -263,5 +268,29 @@ class UserPointsService extends RepositoryBase
         }
 
         return $membersTier;
+    }
+
+    /**
+     * @param $userId
+     * @param null $brand
+     */
+    public function clearUserPointsCache($userId, $brand = null)
+    {
+        Cache::forget($this->getUserPointsCacheKey($userId, $brand));
+    }
+
+    /**
+     * @param $userId
+     * @param null $brand
+     * @return string
+     */
+    public function getUserPointsCacheKey($userId, $brand = null)
+    {
+        return config('points.cache_prefix', '') .
+            '_' .
+            ($brand ?? config('points.brand')) .
+            '_' .
+            $userId .
+            '_total_points';
     }
 }

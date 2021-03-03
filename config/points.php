@@ -4,6 +4,12 @@ return [
     // database
     'database_connection_name' => 'mysql',
 
+    // cache
+    // ttl value in minutes
+    'cache_duration' => 60 * 24,
+    'cache_prefix' => 'user_points',
+    'cache_driver' => env('CACHE_DRIVER', 'redis'),
+
     // host does the db migrations, clients do not
     'data_mode' => 'host', // 'host' or 'client'
 
