@@ -32,7 +32,7 @@ class PointsTestCase extends BaseTestCase
      */
     protected $router;
 
-    protected function setUp()
+    protected function setUp():void
     {
         parent::setUp();
 

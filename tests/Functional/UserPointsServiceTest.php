@@ -14,7 +14,7 @@ class UserPointsServiceTest extends PointsTestCase
      */
     private $userPointsService;
 
-    protected function setUp()
+    protected function setUp():void
     {
         parent::setUp();
 
