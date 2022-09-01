@@ -293,4 +293,28 @@ class UserPointsService extends RepositoryBase
             $userId .
             '_total_points';
     }
+
+    public function countUserPoints($userId)
+    {
+        $userCountRows =
+            $this->userPointsRepository->query()
+                ->select(
+                    [
+                        'user_id',
+                        DB::raw('SUM(points) as total_points'),
+                    ]
+                )
+                ->where('user_id','=', $userId)
+                ->groupBy('user_id')
+                ->get();
+
+        $userCounts = array_combine(
+            $userCountRows->pluck('user_id')
+                ->toArray(),
+            $userCountRows->pluck('total_points')
+                ->toArray()
+        );
+
+        return (integer)($userCounts[$userId] ?? 0);
+    }
 }
