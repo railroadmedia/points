@@ -37,9 +37,10 @@ class UserPointsService extends RepositoryBase
             return self::$userPointsCache[$userId];
         }
 
-        self::$userPointsCache[$userId] = app()
-            ->make(self::class)
-            ->countPoints($userId);
+        self::$userPointsCache[$userId] =
+            app()
+                ->make(self::class)
+                ->countPoints($userId);
 
         return self::$userPointsCache[$userId];
     }
@@ -56,14 +57,13 @@ class UserPointsService extends RepositoryBase
         $cachedValue = Cache::get($cacheKey);
 
         if (is_null($cachedValue)) {
-            $cachedValue = $this->userPointsRepository->query()
-                ->where(
-                    [
-                        'user_id' => $userId,
-                        'brand' => $brand ?? config('points.brand'),
-                    ]
-                )
-                ->sum('points');
+            $cachedValue =
+                $this->userPointsRepository->query()
+                    ->where([
+                                'user_id' => $userId,
+                                'brand' => $brand ?? config('points.brand'),
+                            ])
+                    ->sum('points');
 
             Cache::put($cacheKey, $cachedValue, config('points.cache_duration', 60));
         }
@@ -82,12 +82,10 @@ class UserPointsService extends RepositoryBase
     {
         $userCountRows =
             $this->userPointsRepository->query()
-                ->select(
-                    [
-                        'user_id',
-                        DB::raw('SUM(points) as total_points'),
-                    ]
-                )
+                ->select([
+                             'user_id',
+                             DB::raw('SUM(points) as total_points'),
+                         ])
                 ->whereIn('user_id', $userIds)
                 ->where('brand', $brand ?? config('points.brand'))
                 ->groupBy('user_id')
@@ -127,48 +125,40 @@ class UserPointsService extends RepositoryBase
         $points,
         $pointsDescription = null,
         $brand = null
-    )
-    {
+    ) {
         $existing =
             $this->userPointsRepository->query()
-                ->where(
-                    [
-                        'user_id' => $userId,
-                        'trigger_hash' => $this->hash($triggerHashData),
-                        'trigger_hash_data' => serialize($triggerHashData),
-                        'brand' => $brand ?? config('points.brand'),
-                    ]
-                )
+                ->where([
+                            'user_id' => $userId,
+                            'trigger_hash' => $this->hash($triggerHashData),
+                            'trigger_hash_data' => serialize($triggerHashData),
+                            'brand' => $brand ?? config('points.brand'),
+                        ])
                 ->first();
 
         if (!empty($existing)) {
             $this->clearUserPointsCache($userId, $brand);
 
-            return $this->userPointsRepository->update(
-                $existing['id'],
-                [
-                    'trigger_name' => $triggerName,
-                    'points' => $points,
-                    'points_description' => $pointsDescription,
-                    'updated_at' => Carbon::now()
-                        ->toDateTimeString(),
-                ]
-            );
+            return $this->userPointsRepository->update($existing['id'], [
+                                                                          'trigger_name' => $triggerName,
+                                                                          'points' => $points,
+                                                                          'points_description' => $pointsDescription,
+                                                                          'updated_at' => Carbon::now()
+                                                                              ->toDateTimeString(),
+                                                                      ]);
         }
 
-        $result = $this->userPointsRepository->create(
-            [
-                'user_id' => $userId,
-                'trigger_hash' => $this->hash($triggerHashData),
-                'trigger_hash_data' => serialize($triggerHashData),
-                'brand' => $brand ?? config('points.brand'),
-                'trigger_name' => $triggerName,
-                'points' => $points,
-                'points_description' => $pointsDescription,
-                'created_at' => Carbon::now()
-                    ->toDateTimeString(),
-            ]
-        );
+        $result = $this->userPointsRepository->create([
+                                                          'user_id' => $userId,
+                                                          'trigger_hash' => $this->hash($triggerHashData),
+                                                          'trigger_hash_data' => serialize($triggerHashData),
+                                                          'brand' => $brand ?? config('points.brand'),
+                                                          'trigger_name' => $triggerName,
+                                                          'points' => $points,
+                                                          'points_description' => $pointsDescription,
+                                                          'created_at' => Carbon::now()
+                                                              ->toDateTimeString(),
+                                                      ]);
 
         $this->clearUserPointsCache($userId, $brand);
 
@@ -185,16 +175,14 @@ class UserPointsService extends RepositoryBase
         $userId,
         $triggerHashData,
         $brand = null
-    )
-    {
-        $result = $this->userPointsRepository->query()
-                ->where(
-                    [
-                        'user_id' => $userId,
-                        'trigger_hash' => $this->hash($triggerHashData),
-                        'brand' => $brand ?? config('points.brand'),
-                    ]
-                )
+    ) {
+        $result =
+            $this->userPointsRepository->query()
+                ->where([
+                            'user_id' => $userId,
+                            'trigger_hash' => $this->hash($triggerHashData),
+                            'brand' => $brand ?? config('points.brand'),
+                        ])
                 ->delete() > 0;
 
         $this->clearUserPointsCache($userId, $brand);
@@ -226,18 +214,16 @@ class UserPointsService extends RepositoryBase
         $tierMap = config('points.tier_map');
 
         // Ensures sorted by points ascending so that getRankFromXp functions properly.
-        usort(
-            $tierMap,
-            function ($a, $b) {
-                $a = $a['start'];
-                $b = $b['start'];
+        usort($tierMap, function ($a, $b) {
+            $a = $a['start'];
+            $b = $b['start'];
 
-                if ($a == $b) {
-                    return 0;
-                }
-                return ($a < $b) ? -1 : 1;
+            if ($a == $b) {
+                return 0;
             }
-        );
+
+            return ($a < $b) ? -1 : 1;
+        });
 
         return $tierMap;
     }
@@ -286,12 +272,7 @@ class UserPointsService extends RepositoryBase
      */
     public function getUserPointsCacheKey($userId, $brand = null)
     {
-        return config('points.cache_prefix', '') .
-            '_' .
-            ($brand ?? config('points.brand')) .
-            '_' .
-            $userId .
-            '_total_points';
+        return config('points.cache_prefix', '').'_'.($brand ?? config('points.brand')).'_'.$userId.'_total_points';
     }
 
     public function countUserPoints($userId)
@@ -316,5 +297,26 @@ class UserPointsService extends RepositoryBase
         );
 
         return (integer)($userCounts[$userId] ?? 0);
+    }
+
+    public function countUserPointsPerBrand($userId)
+    {
+        $userCountRows =
+            $this->userPointsRepository->query()
+                ->select([
+                             'user_id',
+                             DB::raw('SUM(points) as total_points'),
+                             'brand',
+                         ])
+                ->where('user_id', '=', $userId)
+                ->groupBy(['user_id', 'brand'])
+                ->get();
+        $userCounts = [];
+
+        foreach ($userCountRows as $userCountRow) {
+            $userCounts[$userCountRow->user_id][$userCountRow->brand] = $userCountRow->total_points;
+        }
+
+        return $userCounts[$userId]??[];
     }
 }
