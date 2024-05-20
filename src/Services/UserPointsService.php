@@ -126,7 +126,26 @@ class UserPointsService extends RepositoryBase
         $pointsDescription = null,
         $brand = null
     ) {
-        $existing =
+
+        \DB::table('points_user_points')->upsert(
+            [
+                ['user_id' => $userId,
+                 'trigger_hash' => $this->hash($triggerHashData),
+                 'brand' => $brand ?? config('points.brand'),
+                 'trigger_hash_data' => serialize($triggerHashData),
+                 'trigger_name' => $triggerName,
+                 'points' => $points,
+                 'points_description' => $pointsDescription,
+                 'created_at' => Carbon::now()->toDateTimeString(),
+                 'updated_at' => Carbon::now()->toDateTimeString(),
+                ]
+            ],
+            ['user_id', 'trigger_hash','brand'],
+            ['trigger_name','points','points_description','updated_at']);
+
+        $this->clearUserPointsCache($userId, $brand);
+
+        $result =
             $this->userPointsRepository->query()
                 ->where([
                             'user_id' => $userId,
@@ -135,32 +154,6 @@ class UserPointsService extends RepositoryBase
                             'brand' => $brand ?? config('points.brand'),
                         ])
                 ->first();
-
-        if (!empty($existing)) {
-            $this->clearUserPointsCache($userId, $brand);
-
-            return $this->userPointsRepository->update($existing['id'], [
-                                                                          'trigger_name' => $triggerName,
-                                                                          'points' => $points,
-                                                                          'points_description' => $pointsDescription,
-                                                                          'updated_at' => Carbon::now()
-                                                                              ->toDateTimeString(),
-                                                                      ]);
-        }
-
-        $result = $this->userPointsRepository->create([
-                                                          'user_id' => $userId,
-                                                          'trigger_hash' => $this->hash($triggerHashData),
-                                                          'trigger_hash_data' => serialize($triggerHashData),
-                                                          'brand' => $brand ?? config('points.brand'),
-                                                          'trigger_name' => $triggerName,
-                                                          'points' => $points,
-                                                          'points_description' => $pointsDescription,
-                                                          'created_at' => Carbon::now()
-                                                              ->toDateTimeString(),
-                                                      ]);
-
-        $this->clearUserPointsCache($userId, $brand);
 
         return $result;
     }
