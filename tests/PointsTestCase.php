@@ -73,9 +73,8 @@ class PointsTestCase extends BaseTestCase
                     'database_connection_name' => 'testbench',
                     'data_mode' => 'host', // 'host' or 'client'
                     'brand' => 'brand',
-                    'table_prefix' => 'points_',
                     'tables' => [
-                        'user_points' => 'user_points',
+                        'user_points' => 'points_user_points',
                     ],
                 ],
             ]

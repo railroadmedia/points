@@ -87,7 +87,8 @@ class UserPointsServiceTest extends PointsTestCase
                 'brand' => 'brand',
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
-                'updated_at' => null,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
             ],
             config('points.database_connection_name')
         );
